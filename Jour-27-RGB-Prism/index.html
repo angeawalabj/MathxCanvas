@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 27 — RGB Prism Lens · MathxCanvas</title>
+  <style>body{margin:0;background:#050505;overflow:hidden;touch-action:none;}canvas{display:block;}</style>
+</head>
+<body>
+<canvas id="canvas1"></canvas>
+<script>
+  const canvas=document.getElementById('canvas1'),ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const dots=[],spacing=25,mouse={x:-1000,y:-1000,radius:180};
+  function setPointer(x,y){mouse.x=x;mouse.y=y;}
+  window.addEventListener('mousemove',(e)=>setPointer(e.x,e.y));
+  window.addEventListener('touchmove',(e)=>{e.preventDefault();setPointer(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+  window.addEventListener('touchend',()=>{mouse.x=-1000;mouse.y=-1000;});
+  class Dot{
+    constructor(x,y){this.baseX=x;this.baseY=y;}
+    getDistortedPos(intensity){
+      let dx=mouse.x-this.baseX,dy=mouse.y-this.baseY,distance=Math.sqrt(dx*dx+dy*dy);
+      if(distance<mouse.radius){let force=(mouse.radius-distance)/mouse.radius;let distortion=Math.pow(force,2)*50*intensity;return{x:this.baseX-(dx/distance)*distortion,y:this.baseY-(dy/distance)*distortion};}
+      return{x:this.baseX,y:this.baseY};
+    }
+    draw(){
+      const rPos=this.getDistortedPos(1.2),gPos=this.getDistortedPos(1.0),bPos=this.getDistortedPos(0.8);
+      ctx.globalCompositeOperation="screen";
+      ctx.fillStyle="#ff0000";ctx.fillRect(rPos.x,rPos.y,2,2);
+      ctx.fillStyle="#00ff00";ctx.fillRect(gPos.x,gPos.y,2,2);
+      ctx.fillStyle="#0000ff";ctx.fillRect(bPos.x,bPos.y,2,2);
+    }
+  }
+  for(let y=0;y<canvas.height;y+=spacing)for(let x=0;x<canvas.width;x+=spacing)dots.push(new Dot(x,y));
+  function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);dots.forEach(d=>d.draw());requestAnimationFrame(animate);}
+  animate();
+</script>
+</body></html>
