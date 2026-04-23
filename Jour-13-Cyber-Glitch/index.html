@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 13 — Cyber Glitch · MathxCanvas</title>
+  <style>
+    body{background:#0a0a0a;height:100vh;display:flex;align-items:center;justify-content:center;margin:0;overflow:hidden;}
+    .glitch{position:relative;color:white;font-size:clamp(40px,10vw,80px);font-weight:bold;font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:5px;cursor:pointer;user-select:none;}
+    .glitch::before,.glitch::after{content:"GLITCH";position:absolute;top:0;left:0;width:100%;height:100%;opacity:0.8;}
+    .glitch:hover::before{color:#0ff;z-index:-1;animation:glitch-anim 0.3s cubic-bezier(.25,.46,.45,.94) both infinite;}
+    .glitch:hover::after{color:#f0f;z-index:-2;animation:glitch-anim 0.3s cubic-bezier(.25,.46,.45,.94) reverse both infinite;}
+    @keyframes glitch-anim{0%{transform:translate(0);clip-path:inset(10% 0 30% 0);}20%{transform:translate(-5px,5px);clip-path:inset(40% 0 10% 0);}40%{transform:translate(-5px,-5px);clip-path:inset(80% 0 5% 0);}60%{transform:translate(5px,5px);clip-path:inset(20% 0 50% 0);}80%{transform:translate(5px,-5px);clip-path:inset(50% 0 20% 0);}100%{transform:translate(0);clip-path:inset(10% 0 30% 0);}}
+    .glitch:hover{animation:shake 0.1s infinite;}
+    @keyframes shake{0%{transform:skew(0deg);}50%{transform:skew(2deg);}100%{transform:skew(-2deg);}}
+    /* Tactile : active le glitch au touch */
+    .glitch.touched::before{color:#0ff;z-index:-1;animation:glitch-anim 0.3s cubic-bezier(.25,.46,.45,.94) both infinite;}
+    .glitch.touched::after{color:#f0f;z-index:-2;animation:glitch-anim 0.3s cubic-bezier(.25,.46,.45,.94) reverse both infinite;}
+    .glitch.touched{animation:shake 0.1s infinite;}
+  </style>
+</head>
+<body>
+  <div class="glitch" id="glitch">Glitch</div>
+  <script>
+    const el=document.getElementById('glitch');
+    el.addEventListener('touchstart',(e)=>{e.preventDefault();el.classList.add('touched');},{passive:false});
+    el.addEventListener('touchend',()=>el.classList.remove('touched'));
+  </script>
+</body></html>

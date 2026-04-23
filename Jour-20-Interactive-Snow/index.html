@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 20 — Interactive Snow · MathxCanvas</title>
+  <style>body{margin:0;background:#0a0d14;overflow:hidden;touch-action:none;}canvas{display:block;}</style>
+</head>
+<body>
+<canvas id="canvas1"></canvas>
+<script>
+  const canvas=document.getElementById('canvas1'),ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const snowflakes=[],mouse={x:-100,y:-100,radius:150};
+  function setPointer(x,y){mouse.x=x;mouse.y=y;}
+  window.addEventListener('mousemove',(e)=>setPointer(e.x,e.y));
+  window.addEventListener('touchmove',(e)=>{e.preventDefault();setPointer(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+  window.addEventListener('touchend',()=>{mouse.x=-100;mouse.y=-100;});
+  class Snowflake{
+    constructor(){this.reset();}
+    reset(){this.x=Math.random()*canvas.width;this.y=Math.random()*-canvas.height;this.size=Math.random()*3+1;this.speedY=Math.random()*1+0.5;this.speedX=(Math.random()-0.5)*0.5;this.opacity=Math.random()*0.5+0.3;}
+    update(){
+      this.y+=this.speedY;this.x+=this.speedX;
+      let dx=mouse.x-this.x,dy=mouse.y-this.y,distance=Math.sqrt(dx*dx+dy*dy);
+      if(distance<mouse.radius){let force=(mouse.radius-distance)/mouse.radius;this.x-=(dx/distance)*force*5;}
+      if(this.y>canvas.height)this.reset();
+    }
+    draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${this.opacity})`;ctx.fill();}
+  }
+  for(let i=0;i<300;i++)snowflakes.push(new Snowflake());
+  function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);snowflakes.forEach(s=>{s.update();s.draw();});requestAnimationFrame(animate);}
+  animate();
+</script>
+</body></html>

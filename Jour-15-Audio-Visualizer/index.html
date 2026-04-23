@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 15 — Audio Visualizer · MathxCanvas</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #050505;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: 'Courier New', monospace;
+      touch-action: none;
+    }
+    canvas { display: block; }
+
+    #ui {
+      position: fixed;
+      bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    #btn {
+      background: transparent;
+      border: 1px solid #00f2ff;
+      color: #00f2ff;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 12px 32px;
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #btn:hover, #btn:active { background: #00f2ff; color: #050505; }
+
+    #hint {
+      color: #333;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    #mode-toggle {
+      background: transparent;
+      border: 1px solid #333;
+      color: #555;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      padding: 8px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    #mode-toggle:hover { border-color: #555; color: #888; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas1"></canvas>
+
+  <div id="ui">
+    <p id="hint">Déplace ta souris pour changer les couleurs</p>
+    <button id="btn">▶ Activer le micro</button>
+    <button id="mode-toggle">Mode : Barres</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas1');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    // ── État global ──────────────────────────────────────────
+    let audioCtx = null;
+    let analyser = null;
+    let dataArray = null;
+    let isRunning = false;
+    let mode = 'bars'; // 'bars' | 'wave' | 'circle'
+    const modes = ['bars', 'wave', 'circle'];
+    const modeLabels = { bars: 'Barres', wave: 'Onde', circle: 'Cercle' };
+
+    const mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+
+    function setPointer(x, y) { mouse.x = x; mouse.y = y; }
+    window.addEventListener('mousemove', (e) => setPointer(e.x, e.y));
+    window.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      setPointer(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+
+    // ── Démarrage audio ──────────────────────────────────────
+    document.getElementById('btn').addEventListener('click', startAudio);
+    document.getElementById('btn').addEventListener('touchend', (e) => {
+      e.preventDefault();
+      startAudio();
+    });
+
+    async function startAudio() {
+      if (isRunning) return;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaStreamSource(stream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        isRunning = true;
+        document.getElementById('btn').textContent = '⬛ Actif';
+        document.getElementById('hint').textContent = 'Parle, chante, mets de la musique !';
+      } catch (err) {
+        document.getElementById('hint').textContent = 'Micro refusé — autorise l\'accès micro';
+      }
+    }
+
+    // ── Changement de mode ───────────────────────────────────
+    const modeBtn = document.getElementById('mode-toggle');
+    modeBtn.addEventListener('click', cycleMode);
+    modeBtn.addEventListener('touchend', (e) => { e.preventDefault(); cycleMode(); });
+
+    function cycleMode() {
+      const idx = modes.indexOf(mode);
+      mode = modes[(idx + 1) % modes.length];
+      modeBtn.textContent = `Mode : ${modeLabels[mode]}`;
+    }
+
+    // ── Données demo si pas de micro ─────────────────────────
+    let demoTime = 0;
+    function getDemoData(length) {
+      const arr = new Uint8Array(length);
+      for (let i = 0; i < length; i++) {
+        arr[i] = Math.sin(demoTime * 0.05 + i * 0.3) * 80 + 80
+                + Math.sin(demoTime * 0.02 + i * 0.1) * 40;
+      }
+      demoTime++;
+      return arr;
+    }
+
+    // ── Couleur selon la souris ──────────────────────────────
+    function getHue(i, total) {
+      const baseHue = (mouse.x / canvas.width) * 360;
+      return (baseHue + (i / total) * 120) % 360;
+    }
+    function getLightness() {
+      return 40 + (mouse.y / canvas.height) * 30;
+    }
+
+    // ── Modes de visualisation ───────────────────────────────
+    function drawBars(data) {
+      const barWidth = canvas.width / data.length * 1.5;
+      let x = 0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < data.length; i++) {
+        const barHeight = (data[i] / 255) * canvas.height * 0.8;
+        const hue = getHue(i, data.length);
+        const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
+        gradient.addColorStop(0, `hsl(${hue}, 100%, ${getLightness()}%)`);
+        gradient.addColorStop(1, `hsl(${(hue + 60) % 360}, 100%, 70%)`);
+        ctx.fillStyle = gradient;
+        // Barre du bas
+        ctx.fillRect(x, canvas.height - barHeight, barWidth - 1, barHeight);
+        // Reflet du haut (symétrie)
+        ctx.globalAlpha = 0.3;
+        ctx.fillRect(x, 0, barWidth - 1, barHeight * 0.4);
+        ctx.globalAlpha = 1;
+        x += barWidth + 1;
+      }
+    }
+
+    function drawWave(data) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      ctx.lineWidth = 2;
+      const sliceWidth = canvas.width / data.length;
+      let x = 0;
+      for (let i = 0; i < data.length; i++) {
+        const v = data[i] / 255;
+        const y = canvas.height / 2 + (v - 0.5) * canvas.height * 0.7;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+        x += sliceWidth;
+      }
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+      for (let i = 0; i < data.length; i++) {
+        gradient.addColorStop(i / data.length, `hsl(${getHue(i, data.length)}, 100%, 60%)`);
+      }
+      ctx.strokeStyle = gradient;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = `hsl(${getHue(0, 1)}, 100%, 60%)`;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    function drawCircle(data) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const cx = canvas.width / 2, cy = canvas.height / 2;
+      const radius = Math.min(canvas.width, canvas.height) * 0.25;
+      ctx.beginPath();
+      for (let i = 0; i < data.length; i++) {
+        const angle = (i / data.length) * Math.PI * 2 - Math.PI / 2;
+        const amp = (data[i] / 255) * radius * 0.8;
+        const r = radius + amp;
+        const x = cx + Math.cos(angle) * r;
+        const y = cy + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      const gradient = ctx.createRadialGradient(cx, cy, radius * 0.5, cx, cy, radius * 1.5);
+      gradient.addColorStop(0, `hsla(${getHue(0, 1)}, 100%, 60%, 0.8)`);
+      gradient.addColorStop(1, `hsla(${getHue(1, 2)}, 100%, 40%, 0.2)`);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      ctx.strokeStyle = `hsl(${getHue(0, 1)}, 100%, 70%)`;
+      ctx.lineWidth = 2;
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = `hsl(${getHue(0, 1)}, 100%, 60%)`;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // ── Boucle d'animation ───────────────────────────────────
+    function animate() {
+      let data;
+      if (isRunning && analyser) {
+        analyser.getByteFrequencyData(dataArray);
+        data = dataArray;
+      } else {
+        data = getDemoData(128);
+      }
+
+      if (mode === 'bars') drawBars(data);
+      else if (mode === 'wave') drawWave(data);
+      else if (mode === 'circle') drawCircle(data);
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

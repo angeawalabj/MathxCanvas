@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 17 — Magnetic Puzzle · MathxCanvas</title>
+  <style>body{margin:0;background:#050505;overflow:hidden;touch-action:none;}canvas{display:block;}</style>
+</head>
+<body>
+<canvas id="canvas1"></canvas>
+<script>
+  const canvas=document.getElementById('canvas1'),ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const pieces=[],mouse={x:-1000,y:-1000,radius:150};
+  function setPointer(x,y){mouse.x=x;mouse.y=y;}
+  window.addEventListener('mousemove',(e)=>setPointer(e.x,e.y));
+  window.addEventListener('touchmove',(e)=>{e.preventDefault();setPointer(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+  window.addEventListener('touchend',()=>{mouse.x=-1000;mouse.y=-1000;});
+
+  // Génération d'une image procédurale (carrés colorés) en remplacement de img.png
+  const offscreen=document.createElement('canvas');
+  offscreen.width=180;offscreen.height=180;
+  const octx=offscreen.getContext('2d');
+  const colors=['#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261','#264653','#a8dadc','#f1faee'];
+  for(let y=0;y<offscreen.height;y+=30)for(let x=0;x<offscreen.width;x+=30){
+    octx.fillStyle=colors[Math.floor(Math.random()*colors.length)];
+    octx.fillRect(x,y,30,30);
+  }
+
+  class Piece{
+    constructor(x,y,size,sx,sy){
+      this.targetX=x;this.targetY=y;
+      this.x=Math.random()*canvas.width;this.y=Math.random()*canvas.height;
+      this.size=size;this.sourceX=sx;this.sourceY=sy;this.vx=0;this.vy=0;
+    }
+    update(){
+      let dx=mouse.x-this.x,dy=mouse.y-this.y,distance=Math.sqrt(dx*dx+dy*dy);
+      if(distance<mouse.radius){let force=(mouse.radius-distance)/mouse.radius;this.vx+=(this.targetX-this.x)*force*0.2;this.vy+=(this.targetY-this.y)*force*0.2;}
+      else{this.vx*=0.95;this.vy*=0.95;}
+      this.x+=this.vx;this.y+=this.vy;
+    }
+    draw(){ctx.drawImage(offscreen,this.sourceX,this.sourceY,this.size,this.size,this.x-this.size/2,this.y-this.size/2,this.size,this.size);}
+  }
+
+  const size=30;
+  const startX=(canvas.width-offscreen.width)/2,startY=(canvas.height-offscreen.height)/2;
+  for(let y=0;y<offscreen.height;y+=size)for(let x=0;x<offscreen.width;x+=size)pieces.push(new Piece(startX+x,startY+y,size,x,y));
+
+  function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p=>{p.update();p.draw();});requestAnimationFrame(animate);
+  }
+  animate();
+</script>
+</body></html>
