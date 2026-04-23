@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 02 — Magnetic Grid · MathxCanvas</title>
+  <style>
+    body {
+      background-color: #111;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #container {
+      display: grid;
+      grid-template-columns: repeat(15, 1fr);
+      gap: 10px;
+      width: 400px;
+    }
+    .square {
+      width: 20px;
+      height: 20px;
+      background-color: #333;
+      border-radius: 4px;
+      transition: transform 0.2s ease-out, background-color 0.2s;
+      will-change: transform;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .square.active {
+      background-color: #ff3e3e;
+      box-shadow: 0 0 10px #ff3e3e;
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+  <script>
+    const container = document.getElementById('container');
+    const rows = 15, cols = 15;
+    const squares = [];
+
+    for (let i = 0; i < rows * cols; i++) {
+      const square = document.createElement('div');
+      square.classList.add('square');
+      container.appendChild(square);
+      squares.push(square);
+    }
+
+    // ── Logique de répulsion partagée souris + tactile ───────
+    function applyForce(clientX, clientY) {
+      squares.forEach(sq => {
+        const rect = sq.getBoundingClientRect();
+        const sqX = rect.left + rect.width / 2;
+        const sqY = rect.top + rect.height / 2;
+        const deltaX = clientX - sqX;
+        const deltaY = clientY - sqY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const triggerDistance = 100;
+
+        if (distance < triggerDistance) {
+          const force = (triggerDistance - distance) / triggerDistance;
+          const moveX = deltaX * force * -0.5;
+          const moveY = deltaY * force * -0.5;
+          sq.style.transform = `translate(${moveX}px, ${moveY}px)`;
+          sq.classList.add('active');
+        } else {
+          sq.style.transform = `translate(0px, 0px)`;
+          sq.classList.remove('active');
+        }
+      });
+    }
+
+    function resetAll() {
+      squares.forEach(sq => {
+        sq.style.transform = `translate(0px, 0px)`;
+        sq.classList.remove('active');
+      });
+    }
+
+    // Souris
+    document.addEventListener('mousemove', (e) => applyForce(e.clientX, e.clientY));
+
+    // Tactile
+    document.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      applyForce(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+
+    document.addEventListener('touchend', resetAll);
+  </script>
+</body>
+</html>
