@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 01 — Neon Grid · MathxCanvas</title>
+  <style>
+    body {
+      background-color: #050505;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    #container {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 400px;
+    }
+    .square {
+      height: 20px;
+      width: 20px;
+      background-color: #1d1d1d;
+      margin: 2px;
+      box-shadow: 0 0 2px #000;
+      transition: 2s ease;
+      /* Tactile : désactive le highlight bleu au tap sur mobile */
+      -webkit-tap-highlight-color: transparent;
+    }
+    .square:hover,
+    .square.active {
+      background-color: #00fffc;
+      box-shadow: 0 0 10px #00fffc, 0 0 30px #00fffc;
+      transition: 0s;
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+  <script>
+    const container = document.getElementById('container');
+    const SQUARES = 400;
+
+    for (let i = 0; i < SQUARES; i++) {
+      const square = document.createElement('div');
+      square.classList.add('square');
+      container.appendChild(square);
+    }
+
+    // ── Support tactile ──────────────────────────────────────
+    // Sur mobile, le :hover ne fonctionne pas au glissement.
+    // On utilise touchmove pour allumer les carrés au passage du doigt.
+    let lastActive = null;
+
+    function getElementFromTouch(e) {
+      const touch = e.touches[0];
+      return document.elementFromPoint(touch.clientX, touch.clientY);
+    }
+
+    container.addEventListener('touchmove', (e) => {
+      e.preventDefault(); // Empêche le scroll pendant l'interaction
+      const el = getElementFromTouch(e);
+      if (el && el.classList.contains('square') && el !== lastActive) {
+        if (lastActive) lastActive.classList.remove('active');
+        el.classList.add('active');
+        lastActive = el;
+      }
+    }, { passive: false });
+
+    container.addEventListener('touchend', () => {
+      if (lastActive) {
+        lastActive.classList.remove('active');
+        lastActive = null;
+      }
+    });
+  </script>
+</body>
+</html>
