@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 28 — Articulated Skeleton · MathxCanvas</title>
+  <style>body{margin:0;background:#05080a;overflow:hidden;touch-action:none;}canvas{display:block;}</style>
+</head>
+<body>
+<canvas id="canvas1"></canvas>
+<script>
+  const canvas=document.getElementById('canvas1'),ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const points=[],numSegments=25,segmentLength=20;
+  const mouse={x:canvas.width/2,y:canvas.height/2};
+  for(let i=0;i<numSegments;i++)points.push({x:canvas.width/2,y:canvas.height/2});
+  function setPointer(x,y){mouse.x=x;mouse.y=y;}
+  window.addEventListener('mousemove',(e)=>setPointer(e.x,e.y));
+  window.addEventListener('touchmove',(e)=>{e.preventDefault();setPointer(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+  function update(){
+    points[0].x=mouse.x;points[0].y=mouse.y;
+    for(let i=1;i<numSegments;i++){
+      const p1=points[i-1],p2=points[i];
+      const dx=p1.x-p2.x,dy=p1.y-p2.y;
+      const distance=Math.sqrt(dx*dx+dy*dy),angle=Math.atan2(dy,dx);
+      if(distance>segmentLength){p2.x=p1.x-Math.cos(angle)*segmentLength;p2.y=p1.y-Math.sin(angle)*segmentLength;}
+    }
+  }
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.lineCap='round';ctx.lineJoin='round';
+    for(let i=0;i<numSegments;i++){
+      ctx.lineWidth=(numSegments-i)*1.5;ctx.strokeStyle=`hsl(${180+i*5},70%,50%)`;
+      if(i>0){ctx.beginPath();ctx.moveTo(points[i-1].x,points[i-1].y);ctx.lineTo(points[i].x,points[i].y);ctx.stroke();}
+      ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(points[i].x,points[i].y,(numSegments-i)*0.5,0,Math.PI*2);ctx.fill();
+    }
+  }
+  function animate(){update();draw();requestAnimationFrame(animate);}
+  animate();
+</script>
+</body></html>

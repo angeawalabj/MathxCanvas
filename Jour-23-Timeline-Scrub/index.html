@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 23 — Timeline Scrub · MathxCanvas</title>
+  <style>body{margin:0;background:#050505;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;touch-action:none;}canvas{border-radius:50%;box-shadow:0 0 50px rgba(255,100,200,0.2);}.hint{color:#555;margin-top:20px;text-transform:uppercase;letter-spacing:2px;font-size:12px;}</style>
+</head>
+<body>
+  <canvas id="canvas1"></canvas>
+  <div class="hint">Glissez de gauche à droite pour faire éclore</div>
+  <script>
+    const canvas=document.getElementById('canvas1'),ctx=canvas.getContext('2d');
+    canvas.width=Math.min(600,window.innerWidth-40);canvas.height=canvas.width;
+    let progress=0;
+    function setProgress(x){progress=Math.max(0,Math.min(1,x/window.innerWidth));}
+    window.addEventListener('mousemove',(e)=>setProgress(e.x));
+    window.addEventListener('touchmove',(e)=>{e.preventDefault();setProgress(e.touches[0].clientX);},{passive:false});
+    function drawFlower(p){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.save();ctx.translate(canvas.width/2,canvas.height/2);
+      const petals=80;
+      for(let i=0;i<petals;i++){
+        ctx.rotate((Math.PI*2)/petals);
+        const distance=p*200,size=Math.sin(p*Math.PI)*50,hue=280+(p*100);
+        ctx.beginPath();ctx.fillStyle=`hsl(${hue},80%,60%)`;ctx.globalAlpha=0.6;
+        ctx.ellipse(distance,0,size,size*0.5,p*Math.PI,0,Math.PI*2);ctx.fill();
+      }
+      ctx.restore();
+    }
+    function animate(){drawFlower(progress);requestAnimationFrame(animate);}
+    animate();
+  </script>
+</body></html>
