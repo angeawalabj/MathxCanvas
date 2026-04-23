@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 05 — Particle Network · MathxCanvas</title>
+  <style>
+    body { margin: 0; background: #0a0a12; overflow: hidden; touch-action: none; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas1"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas1');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particlesArray = [];
+    const mouse = { x: null, y: null, radius: 150 };
+
+    function setPointer(x, y) { mouse.x = x; mouse.y = y; }
+
+    window.addEventListener('mousemove', (e) => setPointer(e.x, e.y));
+    window.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      setPointer(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+    window.addEventListener('touchend', () => { mouse.x = null; mouse.y = null; });
+
+    class Particle {
+      constructor(x, y, dirX, dirY, size) {
+        this.x = x; this.y = y;
+        this.directionX = dirX; this.directionY = dirY;
+        this.size = size;
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+        ctx.fillStyle = '#8c55ff';
+        ctx.fill();
+      }
+      update() {
+        if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
+        if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
+        if (mouse.x !== null) {
+          let dx = mouse.x - this.x, dy = mouse.y - this.y;
+          if (Math.sqrt(dx*dx+dy*dy) < mouse.radius + this.size) {
+            if (mouse.x < this.x && this.x < canvas.width - this.size*10) this.x += 3;
+            if (mouse.x > this.x && this.x > this.size*10) this.x -= 3;
+            if (mouse.y < this.y && this.y < canvas.height - this.size*10) this.y += 3;
+            if (mouse.y > this.y && this.y > this.size*10) this.y -= 3;
+          }
+        }
+        this.x += this.directionX;
+        this.y += this.directionY;
+        this.draw();
+      }
+    }
+
+    function init() {
+      particlesArray = [];
+      let n = (canvas.height * canvas.width) / 9000;
+      for (let i = 0; i < n; i++) {
+        let size = Math.random() * 2 + 1;
+        let x = Math.random() * (innerWidth - size*4) + size*2;
+        let y = Math.random() * (innerHeight - size*4) + size*2;
+        particlesArray.push(new Particle(x, y, (Math.random()*2)-1, (Math.random()*2)-1, size));
+      }
+    }
+
+    function connect() {
+      for (let a = 0; a < particlesArray.length; a++) {
+        for (let b = a; b < particlesArray.length; b++) {
+          let dx = particlesArray[a].x - particlesArray[b].x;
+          let dy = particlesArray[a].y - particlesArray[b].y;
+          let distance = Math.sqrt(dx*dx+dy*dy);
+          if (distance < (canvas.width/7) * (canvas.height/7)) {
+            let opacity = 1 - (distance/150);
+            ctx.strokeStyle = `rgba(140,85,255,${opacity})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+            ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      particlesArray.forEach(p => p.update());
+      connect();
+    }
+
+    init();
+    animate();
+  </script>
+</body>
+</html>
