@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MathxCanvas — 30 jours d'animations mathématiques</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050508;
+      --surface: #0d0d14;
+      --border: rgba(255,255,255,0.07);
+      --accent1: #00f2ff;
+      --accent2: #ff0055;
+      --accent3: #7c3aed;
+      --text: #e8e8f0;
+      --muted: #555570;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0.4;
+    }
+
+    /* ── HEADER ── */
+    header {
+      padding: 80px 40px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .header-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--accent1);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-tag::before {
+      content: '';
+      width: 30px;
+      height: 1px;
+      background: var(--accent1);
+      display: block;
+    }
+
+    h1 {
+      font-size: clamp(48px, 8vw, 96px);
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -2px;
+      margin-bottom: 32px;
+    }
+
+    h1 span.x {
+      color: var(--accent2);
+      font-style: italic;
+    }
+
+    h1 span.canvas {
+      color: var(--accent1);
+    }
+
+    .header-desc {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 560px;
+      line-height: 1.7;
+      font-weight: 400;
+    }
+
+    .header-meta {
+      display: flex;
+      gap: 32px;
+      margin-top: 48px;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .meta-value {
+      font-family: 'Space Mono', monospace;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .meta-label {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .header-links {
+      display: flex;
+      gap: 16px;
+      margin-top: 48px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 1px;
+      padding: 12px 24px;
+      border: 1px solid;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      border-color: var(--accent1);
+      color: var(--accent1);
+      background: transparent;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent1);
+      color: var(--bg);
+    }
+
+    .btn-secondary {
+      border-color: var(--border);
+      color: var(--muted);
+      background: transparent;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    /* ── DIVIDER ── */
+    .section-divider {
+      max-width: 1200px;
+      margin: 0 auto 60px;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .act-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .act-1 .act-label { color: var(--accent1); }
+    .act-2 .act-label { color: #f59e0b; }
+    .act-3 .act-label { color: var(--accent2); }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .act-desc {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ── GRID ── */
+    .grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 2px;
+      margin-bottom: 4px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 32px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.2s;
+      cursor: pointer;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--card-accent, var(--accent1));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover::before { transform: scaleX(1); }
+
+    .card:hover {
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+    }
+
+    .card-act-1 { --card-accent: var(--accent1); }
+    .card-act-2 { --card-accent: #f59e0b; }
+    .card-act-3 { --card-accent: var(--accent2); }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .card-day {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+    }
+
+    .card-status {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      padding: 3px 8px;
+      border: 1px solid;
+      letter-spacing: 1px;
+    }
+
+    .status-live {
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    .status-soon {
+      border-color: var(--muted);
+      color: var(--muted);
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+    }
+
+    .card-math {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--card-accent, var(--accent1));
+      line-height: 1.5;
+    }
+
+    .card-ux {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+      border-left: 2px solid var(--border);
+      padding-left: 12px;
+    }
+
+    .card-realworld {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-realworld::before {
+      content: '→';
+      color: var(--card-accent, var(--accent1));
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      max-width: 1200px;
+      margin: 80px auto 0;
+      padding: 40px 40px 60px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+
+    .footer-left {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 2;
+    }
+
+    .footer-left a {
+      color: var(--accent1);
+      text-decoration: none;
+    }
+
+    .footer-left a:hover { text-decoration: underline; }
+
+    .footer-right {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      header { padding: 48px 20px 40px; }
+      .grid { padding: 0 20px; grid-template-columns: 1fr; }
+      .section-divider { padding: 0 20px; }
+      footer { padding: 32px 20px 40px; }
+      .act-desc { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-tag">Challenge créatif</div>
+    <h1>Math<span class="x">×</span><span class="canvas">Canvas</span></h1>
+    <p class="header-desc">
+      30 animations interactives en JavaScript pur. Chaque jour, un concept mathématique devient visible — et compréhensible.
+    </p>
+    <div class="header-meta">
+      <div class="meta-item">
+        <span class="meta-value">30</span>
+        <span class="meta-label">Animations</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-value">0</span>
+        <span class="meta-label">Dépendances</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-value">3</span>
+        <span class="meta-label">Actes</span>
+      </div>
+    </div>
+    <div class="header-links">
+      <a class="btn btn-primary" href="https://github.com/angeawalabj/MathxCanvas" target="_blank">↗ GitHub</a>
+      <a class="btn btn-secondary" href="https://www.linkedin.com/in/ange-awala-57aa1b363/" target="_blank">LinkedIn</a>
+    </div>
+  </header>
+
+  <!-- ACT 1 -->
+  <div class="section-divider act-1">
+    <span class="act-label">Acte I — Jours 01–10</span>
+    <div class="divider-line"></div>
+    <span class="act-desc">La magie apparaît</span>
+  </div>
+
+  <div class="grid" id="act1"></div>
+
+  <!-- ACT 2 -->
+  <div class="section-divider act-2" style="margin-top:48px">
+    <span class="act-label">Acte II — Jours 11–20</span>
+    <div class="divider-line"></div>
+    <span class="act-desc">La physique prend vie</span>
+  </div>
+
+  <div class="grid" id="act2"></div>
+
+  <!-- ACT 3 -->
+  <div class="section-divider act-3" style="margin-top:48px">
+    <span class="act-label">Acte III — Jours 21–30</span>
+    <div class="divider-line"></div>
+    <span class="act-desc">La complexité révélée</span>
+  </div>
+
+  <div class="grid" id="act3"></div>
+
+  <footer>
+    <div class="footer-left">
+      <strong style="color:#e8e8f0">MathxCanvas</strong><br>
+      Par <a href="https://github.com/angeawalabj">Ange Awala</a> ·
+      <a href="https://www.linkedin.com/in/ange-awala-57aa1b363/">LinkedIn</a><br>
+      Vanilla JS · HTML5 Canvas · Aucune dépendance
+    </div>
+    <div class="footer-right">MIT License</div>
+  </footer>
+
+  <script>
+    const days = [
+      // ACT 1
+      { act: 1, day: '01', title: 'Neon Grid', math: 'CSS pur — aucun calcul', ux: 'Feedback immédiat : l\'interface répond sans délai', real: 'Claviers gaming RGB, hover states', path: './Jour-01-Neon-Grid/', live: true },
+      { act: 1, day: '02', title: 'Magnetic Grid', math: 'Distance euclidienne\n√(Δx² + Δy²)', ux: 'Répulsion = espace personnel de l\'utilisateur', real: 'UI cards interactives, drag zones', path: './Jour-02-Magnetic-Grid/', live: true },
+      { act: 1, day: '03', title: 'Particle Trail', math: 'Vecteurs de vitesse\n(vx, vy)', ux: 'Persistance visuelle — la trace guide le regard', real: 'Curseurs custom, effets de sillage', path: './Jour-03-Particle-Trail/', live: true },
+      { act: 1, day: '04', title: 'Spotlight Effect', math: 'Gradient radial\n+ globalCompositeOperation', ux: 'Révélation progressive — l\'inconnu attire', real: 'Onboarding UX, storytelling interactif', path: './Jour-04-Spotlight-Effect/', live: true },
+      { act: 1, day: '05', title: 'Particle Network', math: 'Seuil de connexion\ndistance < maxDist', ux: 'Réseau visualisé — la proximité crée du lien', real: 'Graphes de données, LinkedIn connections', path: './Jour-05-Particle-Network/', live: true },
+      { act: 1, day: '06', title: 'Liquid Pixel Art', math: 'Décroissance exponentielle\nfillStyle rgba(0,0,0,α)', ux: 'Mémoire visuelle — le passé persiste', real: 'Peinture numérique, effets de fondu', path: './Jour-06-Liquid-Pixel-Art/', live: true },
+      { act: 1, day: '07', title: 'Confetti Explosion', math: 'Gravité + friction\nvy += g; vx *= f', ux: 'Célébration = émotion — récompense visuelle', real: 'Animations succès Stripe, Duolingo', path: './Jour-07-Confetti-Explosion/', live: true },
+      { act: 1, day: '08', title: 'Sacred Geometry', math: 'Équation polaire\nr = a · sin(k · θ)', ux: 'Complexité depuis la simplicité — émerveillement', real: 'Logos génératifs, identités de marque', path: './Jour-08-Sacred-Geometry/', live: true },
+      { act: 1, day: '09', title: 'Flow Field', math: 'Champ vectoriel\nangle = cos(x) + sin(y)', ux: 'Flux naturel — le mouvement suit une logique invisible', real: 'Navigation de drones, IA pathfinding', path: './Jour-09-Flow-Field/', live: true },
+      { act: 1, day: '10', title: 'Magnetic Text', math: 'Répulsion de particules\nforce = (r - dist) / r', ux: 'L\'utilisateur contrôle le chaos — agentivité', real: 'Hero sections interactives, landing pages', path: './Jour-10-Magnetic-Text/', live: true },
+      // ACT 2
+      { act: 2, day: '11', title: 'Gravity Bounce', math: 'Gravitation simplifiée\nF = G / distance', ux: 'Poids = importance — les objets ont du sens', real: 'Simulateurs de formation, physique de jeux', path: './Jour-11-Gravity-Bounce/', live: true },
+      { act: 2, day: '12', title: 'Ripple Effect', math: 'Front d\'onde circulaire\n|dist - r| < 50', ux: 'Action → conséquence différée — cause à effet', real: 'Feedback tactile, UI de confirmation', path: './Jour-12-Ripple-Effect/', live: true },
+      { act: 2, day: '13', title: 'Cyber Glitch', math: 'clip-path aléatoire\n+ décalage de translation', ux: 'Rupture = attention — l\'inattendu capte le regard', real: 'Identité visuelle cyberpunk, titres de jeux', path: './Jour-13-Cyber-Glitch/', live: true },
+      { act: 2, day: '14', title: 'Climbing Vine', math: 'Marche aléatoire\nangle += random() * 0.2', ux: 'Croissance organique — le temps visible', real: 'Arbres de décision, UX narrative', path: './Jour-14-Climbing-Vine/', live: true },
+      { act: 2, day: '15', title: 'Audio Visualizer', math: 'FFT — Transformée de Fourier\nfrequencyData[i]', ux: 'Son visible = information — synesthésie', real: 'Players musicaux, interfaces DJ, Spotify', path: './Jour-15-Audio-Visualizer/', live: false },
+      { act: 2, day: '16', title: 'Curious Eyes', math: 'Arctangente à 2 arguments\natan2(Δy, Δx)', ux: 'Regard = connexion émotionnelle — présence', real: 'Mascottes UI, assistants virtuels', path: './Jour-16-Curious-Eyes/', live: true },
+      { act: 2, day: '17', title: 'Magnetic Puzzle', math: 'Attraction vectorielle\nvx += (tx - x) * force', ux: 'Proximité → assemblage — completion drive', real: 'Drag & drop, interfaces puzzle', path: './Jour-17-Magnetic-Puzzle/', live: true },
+      { act: 2, day: '18', title: 'Neon Tracer', math: 'Vitesse = épaisseur\nwidth = max(2, 25 - vel)', ux: 'Vitesse perçue = expressivité — énergie', real: 'Signature digitale, outils de dessin', path: './Jour-18-Neon-Tracer/', live: true },
+      { act: 2, day: '19', title: 'Kaleidoscope', math: 'Symétrie rotative\nrotate(2π / n)', ux: 'Symétrie = beauté universelle — harmonie', real: 'Générateurs de motifs, textile numérique', path: './Jour-19-Kaleidoscope/', live: true },
+      { act: 2, day: '20', title: 'Interactive Snow', math: 'Champ de force radial\nforce = (r - dist) / r', ux: 'Environnement réactif — présence dans l\'espace', real: 'Ambiances saisonnières, background vivants', path: './Jour-20-Interactive-Snow/', live: true },
+      // ACT 3
+      { act: 3, day: '21', title: 'Gooey Menu', math: 'Filtre SVG gaussien\n+ feColorMatrix threshold', ux: 'Fluidité = douceur perçue — matière liquide', real: 'Menus mobiles modernes, FAB buttons', path: './Jour-21-Gooey-Menu/', live: true },
+      { act: 3, day: '22', title: 'Infinite Tunnel', math: 'Perspective linéaire\nscale = size / maxSize', ux: 'Profondeur = immersion — sentiment d\'espace', real: 'Intro de jeux vidéo, portails WebGL', path: './Jour-22-Infinite-Tunnel/', live: true },
+      { act: 3, day: '23', title: 'Timeline Scrub', math: 'Interpolation linéaire\nlerp(a, b, t)', ux: 'Contrôle du temps = pouvoir — narrative scrubbing', real: 'Sliders narratifs, Apple scroll storytelling', path: './Jour-23-Timeline-Scrub/', live: true },
+      { act: 3, day: '24', title: '3D Tilt Card', math: 'Projection 3D sur plan 2D\nrotateX + rotateY', ux: 'Tilt = profondeur perçue — matérialité', real: 'Cartes produit e-commerce, Pokémon TCG', path: './Jour-24-3D-Tilt-Card/', live: true },
+      { act: 3, day: '25', title: 'Matrix Rain', math: 'Vitesse différentielle\n+ seuil de proximité', ux: 'Densité = urgence — surcharge d\'information', real: 'Data visualization, cybersécurité UI', path: './Jour-25-Matrix-Rain/', live: true },
+      { act: 3, day: '26', title: 'Fourier Circles', math: 'Séries de Fourier\nΣ Aₙ·cos(nωt + φₙ)', ux: 'Ordre dans le chaos — révélation structurelle', real: 'Compression MP3 / JPEG, signal audio', path: './Jour-26-Fourier-Circles/', live: true },
+      { act: 3, day: '27', title: 'RGB Prism Lens', math: 'Aberration chromatique\n+ screen blending mode', ux: 'Lumière = matière — physique de l\'optique', real: 'Post-processing 3D, effets cinématiques', path: './Jour-27-RGB-Prism/', live: true },
+      { act: 3, day: '28', title: 'Articulated Skeleton', math: 'Cinématique inverse FABRIK\np2 = p1 - cos(θ) * len', ux: 'Corps = structure — métaphore organique', real: 'Animation de personnages, robotique', path: './Jour-28-Articulated-Skeleton/', live: true },
+      { act: 3, day: '29', title: 'Interactive Cloth', math: 'Intégration de Verlet\nv = (pos - oldPos) * friction', ux: 'Résistance physique = réalisme — matérialité', real: 'Simulation textile, moteurs de jeux', path: './Jour-29-Interactive-Cloth/', live: true },
+      { act: 3, day: '30', title: 'Final Chaos', math: 'Attracteur gravitationnel\nF = G·m₁m₂ / d²', ux: 'Chaos contrôlé = art — ordre émergent', real: 'Simulations cosmologiques, N-body physics', path: './Jour-30-Final-Chaos/', live: true },
+    ];
+
+    function createCard(d) {
+      const card = document.createElement('a');
+      card.className = `card card-act-${d.act}`;
+      card.href = d.live ? d.path : '#';
+      if (d.live) card.target = '_blank';
+
+      card.innerHTML = `
+        <div class="card-top">
+          <span class="card-day">JOUR ${d.day}</span>
+          <span class="card-status ${d.live ? 'status-live' : 'status-soon'}">${d.live ? 'LIVE' : 'BIENTÔT'}</span>
+        </div>
+        <div class="card-title">${d.title}</div>
+        <div class="card-math">${d.math.replace(/\n/g, '<br>')}</div>
+        <div class="card-ux">${d.ux}</div>
+        <div class="card-realworld">${d.real}</div>
+      `;
+      return card;
+    }
+
+    const act1 = document.getElementById('act1');
+    const act2 = document.getElementById('act2');
+    const act3 = document.getElementById('act3');
+
+    days.forEach(d => {
+      const card = createCard(d);
+      if (d.act === 1) act1.appendChild(card);
+      else if (d.act === 2) act2.appendChild(card);
+      else act3.appendChild(card);
+    });
+  </script>
+</body>
+</html>
