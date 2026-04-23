@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 08 — Sacred Geometry · MathxCanvas</title>
+  <style>
+    body { margin: 0; background: #050505; overflow: hidden; touch-action: none; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas1"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas1');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let angle = 0;
+    const mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+
+    function setPointer(x, y) { mouse.x = x; mouse.y = y; }
+    window.addEventListener('mousemove', (e) => setPointer(e.x, e.y));
+    window.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      setPointer(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+
+    function drawSpirograph() {
+      ctx.fillStyle = 'rgba(5, 5, 5, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      let k = mouse.x / 50;
+      let amplitude = mouse.y / 4;
+
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.beginPath();
+      ctx.strokeStyle = `hsl(${angle % 360}, 100%, 50%)`;
+      ctx.lineWidth = 2;
+
+      for (let i = 0; i < 360; i++) {
+        let theta = i * Math.PI / 180;
+        let r = amplitude * Math.sin(k * (theta + angle));
+        let x = r * Math.cos(theta);
+        let y = r * Math.sin(theta);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+      angle += 0.02;
+      requestAnimationFrame(drawSpirograph);
+    }
+    drawSpirograph();
+  </script>
+</body>
+</html>
