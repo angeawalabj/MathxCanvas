@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 29 — Interactive Cloth · MathxCanvas</title>
+  <style>body{margin:0;background:#050505;overflow:hidden;touch-action:none;}canvas{display:block;}</style>
+</head>
+<body>
+<canvas id="canvas1"></canvas>
+<script>
+  const canvas=document.getElementById('canvas1'),ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const points=[],spacing=30,friction=0.95,mouse={x:0,y:0,radius:100,down:false};
+  function setPointer(x,y){mouse.x=x;mouse.y=y;}
+  window.addEventListener('mousemove',(e)=>setPointer(e.x,e.y));
+  window.addEventListener('mousedown',()=>mouse.down=true);
+  window.addEventListener('mouseup',()=>mouse.down=false);
+  window.addEventListener('touchmove',(e)=>{e.preventDefault();setPointer(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+  window.addEventListener('touchstart',(e)=>{e.preventDefault();mouse.down=true;setPointer(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+  window.addEventListener('touchend',()=>mouse.down=false);
+  class Point{
+    constructor(x,y){this.x=x;this.y=y;this.oldX=x;this.oldY=y;this.originalX=x;this.originalY=y;}
+    update(){
+      let vx=(this.x-this.oldX)*friction,vy=(this.y-this.oldY)*friction;
+      this.oldX=this.x;this.oldY=this.y;this.x+=vx;this.y+=vy;
+      let dx=mouse.x-this.x,dy=mouse.y-this.y,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<mouse.radius){let force=(mouse.radius-dist)/mouse.radius;if(mouse.down){this.x+=dx*0.1;this.y+=dy*0.1;}else{this.x-=dx*0.1*force;this.y-=dy*0.1*force;}}
+      this.x+=(this.originalX-this.x)*0.05;this.y+=(this.originalY-this.y)*0.05;
+    }
+  }
+  for(let y=0;y<canvas.height;y+=spacing)for(let x=0;x<canvas.width;x+=spacing)points.push(new Point(x,y));
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);ctx.strokeStyle="rgba(0,242,255,0.3)";ctx.lineWidth=1;
+    for(let i=0;i<points.length;i++){
+      const p=points[i];p.update();
+      let nextRight=points[i+1];
+      if(nextRight&&nextRight.originalY===p.originalY){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(nextRight.x,nextRight.y);ctx.stroke();}
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+</script>
+</body></html>
