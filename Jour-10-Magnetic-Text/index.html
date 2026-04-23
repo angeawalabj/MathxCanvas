@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 10 — Magnetic Text · MathxCanvas</title>
+  <style>
+    body { margin: 0; background: #050505; overflow: hidden; touch-action: none; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas1"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas1');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particles = [];
+    const mouse = { x: -1000, y: -1000, radius: 100 };
+    const text = "MAGNETIC";
+
+    function setPointer(x, y) { mouse.x = x; mouse.y = y; }
+    window.addEventListener('mousemove', (e) => setPointer(e.x, e.y));
+    window.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      setPointer(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+    window.addEventListener('touchend', () => { mouse.x = -1000; mouse.y = -1000; });
+
+    class Particle {
+      constructor(x, y, char) {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.baseX = x; this.baseY = y;
+        this.char = char;
+        this.density = (Math.random() * 30) + 1;
+      }
+      draw() {
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 40px sans-serif';
+        ctx.fillText(this.char, this.x, this.y);
+      }
+      update() {
+        let dx = mouse.x - this.x, dy = mouse.y - this.y;
+        let distance = Math.sqrt(dx*dx + dy*dy);
+        if (distance < mouse.radius) {
+          let force = (mouse.radius - distance) / mouse.radius;
+          this.x -= (dx/distance) * force * this.density;
+          this.y -= (dy/distance) * force * this.density;
+        } else {
+          if (this.x !== this.baseX) this.x -= (this.x - this.baseX) / 10;
+          if (this.y !== this.baseY) this.y -= (this.y - this.baseY) / 10;
+        }
+      }
+    }
+
+    function init() {
+      particles = [];
+      ctx.font = 'bold 40px sans-serif';
+      let textWidth = ctx.measureText(text).width;
+      let startX = (canvas.width - textWidth) / 2;
+      let startY = canvas.height / 2;
+      for (let i = 0; i < text.length; i++) {
+        let charWidth = ctx.measureText(text[i]).width;
+        particles.push(new Particle(startX, startY, text[i]));
+        startX += charWidth + 5;
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => { p.update(); p.draw(); });
+      requestAnimationFrame(animate);
+    }
+    init();
+    animate();
+  </script>
+</body>
+</html>
