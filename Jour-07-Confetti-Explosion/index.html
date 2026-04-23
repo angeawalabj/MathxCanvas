@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 07 — Confetti Explosion · MathxCanvas</title>
+  <style>
+    body { margin: 0; background: #050505; overflow: hidden; touch-action: none; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas1"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas1');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+    const gravity = 0.5, friction = 0.98;
+
+    class Confetti {
+      constructor(x, y) {
+        this.x = x; this.y = y;
+        this.size = Math.random() * 8 + 4;
+        this.velocityX = (Math.random() - 0.5) * 15;
+        this.velocityY = (Math.random() - 0.5) * 15 - 10;
+        this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        this.rotation = Math.random() * 360;
+        this.rotationSpeed = Math.random() * 10 - 5;
+      }
+      update() {
+        this.velocityY += gravity;
+        this.velocityX *= friction;
+        this.velocityY *= friction;
+        this.x += this.velocityX;
+        this.y += this.velocityY;
+        this.rotation += this.rotationSpeed;
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation * Math.PI / 180);
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+        ctx.restore();
+      }
+    }
+
+    function explode(x, y) {
+      for (let i = 0; i < 50; i++) particles.push(new Confetti(x, y));
+    }
+
+    window.addEventListener('mousedown', (e) => explode(e.x, e.y));
+    window.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      explode(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+        if (particles[i].y > canvas.height + 20) { particles.splice(i, 1); i--; }
+      }
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+</html>

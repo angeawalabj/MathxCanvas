@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 06 — Liquid Pixel Art · MathxCanvas</title>
+  <style>
+    body { margin: 0; background: #000; overflow: hidden; touch-action: none; }
+    canvas { display: block; filter: contrast(150%) brightness(120%); }
+  </style>
+</head>
+<body>
+  <canvas id="canvas1"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas1');
+    const ctx = canvas.getContext('2d');
+    const cellSize = 20;
+    let hue = 0;
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function paint(clientX, clientY) {
+      const x = Math.floor(clientX / cellSize) * cellSize;
+      const y = Math.floor(clientY / cellSize) * cellSize;
+      ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+      ctx.fillRect(x, y, cellSize, cellSize);
+      hue += 1;
+    }
+
+    window.addEventListener('mousemove', (e) => paint(e.x, e.y));
+    window.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      paint(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+
+    function fade() {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      requestAnimationFrame(fade);
+    }
+    fade();
+  </script>
+</body>
+</html>

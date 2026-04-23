@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 04 — Spotlight Effect · MathxCanvas</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #050505;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: none;
+      touch-action: none;
+    }
+    h1 {
+      color: #333;
+      font-size: 5rem;
+      text-transform: uppercase;
+      letter-spacing: 10px;
+      text-align: center;
+      user-select: none;
+    }
+    canvas {
+      position: absolute;
+      top: 0; left: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Secret <br> Information</h1>
+  <canvas id="spotlight"></canvas>
+  <script>
+    const canvas = document.getElementById('spotlight');
+    const ctx = canvas.getContext('2d');
+    let mouse = { x: -300, y: -300 };
+    const radius = 150;
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+
+    // Souris
+    window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+
+    // ── Tactile ──────────────────────────────────────────────
+    window.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      mouse.x = e.touches[0].clientX;
+      mouse.y = e.touches[0].clientY;
+    }, { passive: false });
+
+    // Cache la lumière quand le doigt se lève
+    window.addEventListener('touchend', () => { mouse.x = -300; mouse.y = -300; });
+
+    function draw() {
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.globalCompositeOperation = 'destination-out';
+      const gradient = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, radius);
+      gradient.addColorStop(0, 'rgba(255,255,255,1)');
+      gradient.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(mouse.x, mouse.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.globalCompositeOperation = 'source-over';
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    draw();
+  </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 09 — Flow Field · MathxCanvas</title>
+  <style>
+    body { margin: 0; background: #000; overflow: hidden; touch-action: none; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas1"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas1');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+    const numberOfParticles = 1000;
+    const mouse = { x: -1000, y: -1000 };
+
+    function setPointer(x, y) { mouse.x = x; mouse.y = y; }
+    window.addEventListener('mousemove', (e) => setPointer(e.x, e.y));
+    window.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      setPointer(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+    window.addEventListener('touchend', () => { mouse.x = -1000; mouse.y = -1000; });
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.speed = Math.random() * 2 + 1;
+        this.history = [];
+        this.maxLength = Math.floor(Math.random() * 20 + 5);
+      }
+      update() {
+        let angle = (Math.cos(this.x * 0.01) + Math.sin(this.y * 0.01)) * 2;
+        let dx = mouse.x - this.x, dy = mouse.y - this.y;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 100) angle += 1.5;
+        this.x += Math.cos(angle) * this.speed;
+        this.y += Math.sin(angle) * this.speed;
+        this.history.push({ x: this.x, y: this.y });
+        if (this.history.length > this.maxLength) this.history.shift();
+        if (this.x > canvas.width || this.x < 0 || this.y > canvas.height || this.y < 0) {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.history = [];
+        }
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.strokeStyle = '#3498db';
+        ctx.lineWidth = 1;
+        if (this.history.length > 0) {
+          ctx.moveTo(this.history[0].x, this.history[0].y);
+          for (let i = 1; i < this.history.length; i++) ctx.lineTo(this.history[i].x, this.history[i].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    for (let i = 0; i < numberOfParticles; i++) particles.push(new Particle());
+
+    function animate() {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => { p.update(); p.draw(); });
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+</html>
