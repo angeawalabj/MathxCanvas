@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 16 — Curious Eyes · MathxCanvas</title>
+  <style>
+    body{margin:0;background:#1a1a1a;overflow:hidden;display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:20px;padding:50px;touch-action:none;}
+    .eye{width:80px;height:80px;background:#fff;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px rgba(0,0,0,0.3);}
+    .pupil{width:30px;height:30px;background:#000;border-radius:50%;position:absolute;transition:0.1s ease-out;}
+  </style>
+</head>
+<body>
+<script>
+  for(let i=0;i<40;i++){
+    const eye=document.createElement('div');eye.className='eye';
+    const pupil=document.createElement('div');pupil.className='pupil';
+    eye.appendChild(pupil);document.body.appendChild(eye);
+  }
+  const pupils=document.querySelectorAll('.pupil');
+  function movePupils(clientX,clientY){
+    pupils.forEach(pupil=>{
+      const rect=pupil.getBoundingClientRect();
+      const eyeX=rect.left+rect.width/2,eyeY=rect.top+rect.height/2;
+      const angle=Math.atan2(clientY-eyeY,clientX-eyeX);
+      const x=Math.cos(angle)*15,y=Math.sin(angle)*15;
+      pupil.style.transform=`translate(${x}px,${y}px)`;
+    });
+  }
+  window.addEventListener('mousemove',(e)=>movePupils(e.clientX,e.clientY));
+  window.addEventListener('touchmove',(e)=>{e.preventDefault();movePupils(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+</script>
+</body></html>
