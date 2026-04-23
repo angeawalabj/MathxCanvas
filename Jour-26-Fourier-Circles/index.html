@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 26 — Fourier Circles · MathxCanvas</title>
+  <style>body{margin:0;background:#050505;overflow:hidden;touch-action:none;}canvas{display:block;}</style>
+</head>
+<body>
+<canvas id="canvas1"></canvas>
+<script>
+  const canvas=document.getElementById('canvas1'),ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  let time=0,path=[];
+  const mouse={x:0,y:0};
+  function setPointer(x,y){mouse.x=(x/canvas.width)*10;mouse.y=(y/canvas.height)*100;}
+  window.addEventListener('mousemove',(e)=>setPointer(e.x,e.y));
+  window.addEventListener('touchmove',(e)=>{e.preventDefault();setPointer(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+  function draw(){
+    ctx.fillStyle='rgba(5,5,5,0.2)';ctx.fillRect(0,0,canvas.width,canvas.height);
+    let x=canvas.width/2,y=canvas.height/2;
+    for(let i=0;i<5;i++){
+      let prevX=x,prevY=y,n=i*2+1;
+      let radius=mouse.y*(4/(n*Math.PI));
+      x+=radius*Math.cos(n*time);y+=radius*Math.sin(n*time);
+      ctx.beginPath();ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.arc(prevX,prevY,radius,0,Math.PI*2);ctx.stroke();
+      ctx.beginPath();ctx.strokeStyle='#00d4ff';ctx.moveTo(prevX,prevY);ctx.lineTo(x,y);ctx.stroke();
+    }
+    path.unshift({x,y});if(path.length>200)path.pop();
+    ctx.beginPath();ctx.strokeStyle='#ff0055';ctx.lineWidth=2;
+    if(path.length>1){ctx.moveTo(path[0].x,path[0].y);for(let i=1;i<path.length;i++)ctx.lineTo(path[i].x,path[i].y);ctx.stroke();}
+    time+=0.05*(mouse.x||1);requestAnimationFrame(draw);
+  }
+  mouse.x=5;mouse.y=50;
+  draw();
+</script>
+</body></html>
