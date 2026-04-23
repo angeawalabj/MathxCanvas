@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jour 22 — Infinite Tunnel · MathxCanvas</title>
+  <style>body{margin:0;background:#000;overflow:hidden;touch-action:none;}canvas{display:block;}</style>
+</head>
+<body>
+<canvas id="canvas1"></canvas>
+<script>
+  const canvas=document.getElementById('canvas1'),ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const rings=[],mouse={x:canvas.width/2,y:canvas.height/2};
+  function setPointer(x,y){mouse.x=x;mouse.y=y;}
+  window.addEventListener('mousemove',(e)=>setPointer(e.x,e.y));
+  window.addEventListener('touchmove',(e)=>{e.preventDefault();setPointer(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+  class Ring{
+    constructor(){this.reset(0);}
+    reset(size){this.size=size;this.color=`hsl(${Math.random()*60+180},100%,50%)`;}
+    update(){
+      this.size+=5;
+      const s=this.size/200;
+      this.drawX=(canvas.width/2)+(mouse.x-canvas.width/2)*s;
+      this.drawY=(canvas.height/2)+(mouse.y-canvas.height/2)*s;
+      if(this.size>canvas.width)this.reset(0);
+    }
+    draw(){
+      ctx.beginPath();ctx.arc(this.drawX,this.drawY,this.size,0,Math.PI*2);
+      ctx.strokeStyle=this.color;ctx.lineWidth=2;
+      ctx.globalAlpha=1-(this.size/canvas.width);ctx.stroke();
+    }
+  }
+  for(let i=0;i<50;i++){const r=new Ring();r.size=i*(canvas.width/50);rings.push(r);}
+  function animate(){
+    ctx.fillStyle='black';ctx.globalAlpha=1;ctx.fillRect(0,0,canvas.width,canvas.height);
+    rings.sort((a,b)=>b.size-a.size);rings.forEach(r=>{r.update();r.draw();});requestAnimationFrame(animate);
+  }
+  animate();
+</script>
+</body></html>
